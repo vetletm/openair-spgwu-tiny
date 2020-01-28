@@ -43,7 +43,7 @@ using namespace pgwc;
 #define SYSTEM_CMD_MAX_STR_SIZE 512
 extern util::async_shell_cmd *async_shell_cmd_inst;
 extern pgw_app *pgw_app_inst;
-extern pgw_config pgw_cfg;
+extern pgw_config *pgw_cfg;
 pgw_s5s8 *pgw_s5s8_inst = nullptr;
 pgwc_sxab *pgwc_sxab_inst = nullptr;
 extern itti_mw *itti_inst;
@@ -51,19 +51,19 @@ extern itti_mw *itti_inst;
 void pgw_app_task (void*);
 
 //------------------------------------------------------------------------------
-int pgw_app::apply_config (const pgw_config& cfg)
+int pgw_app::apply_config (const pgw_config* const cfg)
 {
   Logger::pgwc_app().info("Apply config...");
 
-  for (int ia = 0; ia < cfg.num_apn; ia++) {
-    if (cfg.apn[ia].pool_id_iv4 >= 0) {
-      int pool_id = cfg.apn[ia].pool_id_iv4;
-      int range = be32toh(cfg.ue_pool_range_high[pool_id].s_addr) - be32toh(cfg.ue_pool_range_low[pool_id].s_addr) ;
-      paa_dynamic::get_instance().add_pool(cfg.apn[ia].apn_label, pool_id, cfg.ue_pool_range_low[pool_id], range);
+  for (int ia = 0; ia < cfg->num_apn; ia++) {
+    if (cfg->apn[ia].pool_id_iv4 >= 0) {
+      int pool_id = cfg->apn[ia].pool_id_iv4;
+      int range = be32toh(cfg->ue_pool_range_high[pool_id].s_addr) - be32toh(cfg->ue_pool_range_low[pool_id].s_addr) ;
+      paa_dynamic::get_instance().add_pool(cfg->apn[ia].apn_label, pool_id, cfg->ue_pool_range_low[pool_id], range);
     }
-    if (cfg.apn[ia].pool_id_iv6 >= 0) {
-      int pool_id = cfg.apn[ia].pool_id_iv6;
-      paa_dynamic::get_instance().add_pool(cfg.apn[ia].apn_label, pool_id, cfg.paa_pool6_prefix[pool_id], cfg.paa_pool6_prefix_len[pool_id]);
+    if (cfg->apn[ia].pool_id_iv6 >= 0) {
+      int pool_id = cfg->apn[ia].pool_id_iv6;
+      paa_dynamic::get_instance().add_pool(cfg->apn[ia].apn_label, pool_id, cfg->paa_pool6_prefix[pool_id], cfg->paa_pool6_prefix_len[pool_id]);
     }
   }
 
@@ -433,7 +433,7 @@ void pgw_app::handle_itti_msg (std::shared_ptr<itti_s5s8_create_session_request>
     return;
   }
 
-  if (not pgw_cfg.is_dotted_apn_handled(csreq->gtp_ies.apn.access_point_name, csreq->gtp_ies.pdn_type)) {
+  if (not pgw_cfg->is_dotted_apn_handled(csreq->gtp_ies.apn.access_point_name, csreq->gtp_ies.pdn_type)) {
     // MME sent request with teid = 0. This is not valid...
     Logger::pgwc_app().warn("Received CREATE_SESSION_REQUEST unknown requested APN %s, ignore message", csreq->gtp_ies.apn.access_point_name.c_str());
     // TODO send reply
@@ -463,7 +463,7 @@ void pgw_app::handle_itti_msg (std::shared_ptr<itti_s5s8_create_session_request>
     }
   } else {
     if (csreq->teid) {
-      fteid_t l_fteid = pgw_app_inst->build_s5s8_cp_fteid(pgw_cfg.s5s8_cp.addr4, csreq->teid);
+      fteid_t l_fteid = pgw_app_inst->build_s5s8_cp_fteid(pgw_cfg->s5s8_cp.addr4, csreq->teid);
       if (is_s5s8c_teid_exist(csreq->teid)) {
         pc = s5s8cpgw_fteid_2_pgw_context(l_fteid);
       } else {
@@ -498,7 +498,7 @@ void pgw_app::handle_itti_msg (std::shared_ptr<itti_s5s8_modify_bearer_request> 
       return;
     }
   }
-  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg.s5s8_cp.addr4, mbreq->teid);
+  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg->s5s8_cp.addr4, mbreq->teid);
   std::shared_ptr<pgw_context> pc = s5s8cpgw_fteid_2_pgw_context(l_fteid);
   if (pc.get()) {
     pc.get()->handle_itti_msg(smbreq);
@@ -518,7 +518,7 @@ void pgw_app::handle_itti_msg (std::shared_ptr<itti_s5s8_release_access_bearers_
 {
   Logger::pgwc_app().debug("Received S5S8 RELEASE_ACCESS_BEARERS_REQUEST teid " TEID_FMT "  gtpc_tx_id " PROC_ID_FMT " ", smbreq->teid, smbreq->gtpc_tx_id);
 
-  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg.s5s8_cp.addr4, smbreq->teid);
+  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg->s5s8_cp.addr4, smbreq->teid);
   std::shared_ptr<pgw_context> pc = s5s8cpgw_fteid_2_pgw_context(l_fteid);
   if (pc.get()) {
     pc.get()->handle_itti_msg(smbreq);
@@ -549,7 +549,7 @@ void pgw_app::handle_itti_msg (std::shared_ptr<itti_s5s8_delete_session_request>
       return;
     }
   }
-  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg.s5s8_cp.addr4, dsreq->teid);
+  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg->s5s8_cp.addr4, dsreq->teid);
   std::shared_ptr<pgw_context> pc = s5s8cpgw_fteid_2_pgw_context(l_fteid);
   if (pc.get()) {
     pc.get()->handle_itti_msg(sdsreq);
@@ -571,7 +571,7 @@ void pgw_app::handle_itti_msg (std::shared_ptr<itti_s5s8_delete_session_request>
 //------------------------------------------------------------------------------
 void pgw_app::handle_itti_msg (itti_s5s8_downlink_data_notification_acknowledge& m)
 {
-  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg.s5s8_cp.addr4, m.teid);
+  fteid_t l_fteid = build_s5s8_cp_fteid(pgw_cfg->s5s8_cp.addr4, m.teid);
   std::shared_ptr<pgw_context> pc = s5s8cpgw_fteid_2_pgw_context(l_fteid);
   if (pc.get()) {
     Logger::pgwc_app().debug("Received S5S8 DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE sender teid " TEID_FMT "  gtpc_tx_id " PROC_ID_FMT " ", m.teid, m.gtpc_tx_id);

@@ -65,7 +65,7 @@ private:
   mutable std::shared_mutex           m_s5s8lteid2pgw_context;
   mutable std::shared_mutex           m_seid2pgw_context;
 
-  int apply_config(const pgw_config& cfg);
+  int apply_config(const pgw_config * const cfg);
 
   teid_t generate_s5s8_cp_teid();
   void free_s5s8c_teid(const teid_t& teid_s5s8_cp);

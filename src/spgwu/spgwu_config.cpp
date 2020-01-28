@@ -64,7 +64,7 @@ int spgwu_config::execute ()
 }
 
 //------------------------------------------------------------------------------
-int  spgwu_config::get_pfcp_node_id(pfcp::node_id_t& node_id)
+int  spgwu_config::get_pfcp_node_id(pfcp::node_id_t& node_id) const
 {
   node_id = {};
   if (sx.addr4.s_addr) {
@@ -80,7 +80,7 @@ int  spgwu_config::get_pfcp_node_id(pfcp::node_id_t& node_id)
   return RETURNerror;
 }
 //------------------------------------------------------------------------------
-int spgwu_config::get_pfcp_fseid(pfcp::fseid_t& fseid)
+int spgwu_config::get_pfcp_fseid(pfcp::fseid_t& fseid) const
 {
   int rc = RETURNerror;
   fseid = {};
@@ -246,37 +246,37 @@ int spgwu_config::load(const string& config_file)
   const Setting& root = cfg.getRoot();
 
   try {
-    const Setting& spgwu_cfg = root[SPGWU_CONFIG_STRING_SPGWU_CONFIG];
+    const Setting& spgwu_setting = root[SPGWU_CONFIG_STRING_SPGWU_CONFIG];
   } catch(const SettingNotFoundException &nfex) {
     Logger::spgwu_app().error("%s : %s", nfex.what(), nfex.getPath());
     return RETURNerror;
   }
 
 
-  const Setting& spgwu_cfg = root[SPGWU_CONFIG_STRING_SPGWU_CONFIG];
+  const Setting& spgwu_setting = root[SPGWU_CONFIG_STRING_SPGWU_CONFIG];
 
   try {
-   spgwu_cfg.lookupValue(SPGWU_CONFIG_STRING_INSTANCE, instance);
+    spgwu_setting.lookupValue(SPGWU_CONFIG_STRING_INSTANCE, instance);
   } catch(const SettingNotFoundException &nfex) {
     Logger::spgwu_app().info("%s : %s, using defaults", nfex.what(), nfex.getPath());
   }
 
   try {
-    spgwu_cfg.lookupValue(SPGWU_CONFIG_STRING_PID_DIRECTORY, pid_dir);
+    spgwu_setting.lookupValue(SPGWU_CONFIG_STRING_PID_DIRECTORY, pid_dir);
     util::trim(pid_dir);
   } catch(const SettingNotFoundException &nfex) {
     Logger::spgwu_app().info("%s : %s, using defaults", nfex.what(), nfex.getPath());
   }
 
   try {
-    const Setting& itti_cfg = spgwu_cfg[SPGWU_CONFIG_STRING_ITTI_TASKS];
+    const Setting& itti_cfg = spgwu_setting[SPGWU_CONFIG_STRING_ITTI_TASKS];
     load_itti(itti_cfg, itti);
   } catch(const SettingNotFoundException &nfex) {
     Logger::spgwu_app().info("%s : %s, using defaults", nfex.what(), nfex.getPath());
   }
 
   try {
-    const Setting& nw_if_cfg = spgwu_cfg[SPGWU_CONFIG_STRING_INTERFACES];
+    const Setting& nw_if_cfg = spgwu_setting[SPGWU_CONFIG_STRING_INTERFACES];
 
     const Setting& s1_up_cfg = nw_if_cfg[SPGWU_CONFIG_STRING_INTERFACE_S1U_S12_S4_UP];
     load_interface(s1_up_cfg, s1_up);
@@ -300,7 +300,7 @@ int spgwu_config::load(const string& config_file)
       }
     }
 
-    const Setting& pdn_network_list_cfg = spgwu_cfg[SPGWU_CONFIG_STRING_PDN_NETWORK_LIST];
+    const Setting& pdn_network_list_cfg = spgwu_setting[SPGWU_CONFIG_STRING_PDN_NETWORK_LIST];
     int count = pdn_network_list_cfg.getLength();
     for (int i = 0; i < count; i++) {
       pdn_cfg_t pdn_cfg = {};
@@ -352,7 +352,7 @@ int spgwu_config::load(const string& config_file)
       pdns.push_back(pdn_cfg);
     }
 
-    const Setting& spgwc_list_cfg = spgwu_cfg[SPGWU_CONFIG_STRING_SPGWC_LIST];
+    const Setting& spgwc_list_cfg = spgwu_setting[SPGWU_CONFIG_STRING_SPGWC_LIST];
     count = spgwc_list_cfg.getLength();
     for (int i = 0; i < count; i++) {
       pdn_cfg_t pdn_cfg = {};
@@ -384,7 +384,7 @@ int spgwu_config::load(const string& config_file)
 }
 
 //------------------------------------------------------------------------------
-void spgwu_config::display ()
+void spgwu_config::display () const
 {
   Logger::spgwu_app().info("==== EURECOM %s v%s ====", PACKAGE_NAME, PACKAGE_VERSION);
   Logger::spgwu_app().info( "Configuration:");

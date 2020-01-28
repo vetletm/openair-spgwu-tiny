@@ -40,7 +40,7 @@ using namespace std;
 
 
 extern itti_mw *itti_inst;
-extern pgw_config  pgw_cfg;
+extern pgw_config  *pgw_cfg;
 extern pgw_s5s8   *pgw_s5s8_inst;
 void pgw_s5s8_task (void*);
 
@@ -111,7 +111,7 @@ void pgw_s5s8_task (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-pgw_s5s8::pgw_s5s8 () : gtpv2c_stack(string(inet_ntoa(pgw_cfg.s5s8_cp.addr4)), pgw_cfg.s5s8_cp.port, pgw_cfg.s5s8_cp.thread_rd_sched_params)
+pgw_s5s8::pgw_s5s8 () : gtpv2c_stack(string(inet_ntoa(pgw_cfg->s5s8_cp.addr4)), pgw_cfg->s5s8_cp.port, pgw_cfg->s5s8_cp.thread_rd_sched_params)
 {
   Logger::pgwc_s5s8().startup("Starting...");
   if (itti_inst->create_task(TASK_PGWC_S5S8, pgw_s5s8_task, nullptr) ) {

@@ -34,10 +34,10 @@ using namespace gtpv2c;
 using namespace sgwc;
 using namespace std;
 
-extern pgwc::pgw_config  pgw_cfg;
+extern pgwc::pgw_config  *pgw_cfg;
 extern itti_mw *itti_inst;
 extern sgwc_app *sgwc_app_inst;
-extern sgwc_config sgwc_cfg;
+extern sgwc_config *sgwc_cfg;
 
 void sebc_procedure::handle_itti_msg (itti_s5s8_create_session_response& resp, std::shared_ptr<sgw_eps_bearer_context> ebc, std::shared_ptr<sgw_pdn_connection> spc)
 {
@@ -91,7 +91,7 @@ int create_session_request_procedure::run(shared_ptr<sgw_eps_bearer_context> c)
   std::shared_ptr<sgw_pdn_connection> spc = ebc->insert_pdn_connection(p);
   // TODO : default_bearer
   p->default_bearer = msg.gtp_ies.bearer_contexts_to_be_created.at(0).eps_bearer_id;
-  p->sgw_fteid_s5_s8_cp = sgwc_app_inst->generate_s5s8_cp_fteid(sgwc_cfg.s5s8_cp.addr4);
+  p->sgw_fteid_s5_s8_cp = sgwc_app_inst->generate_s5s8_cp_fteid(sgwc_cfg->s5s8_cp.addr4);
   sgwc_app_inst->set_s5s8sgw_teid_2_sgw_contexts(p->sgw_fteid_s5_s8_cp.teid_gre_key, c, spc);
 
   // Forward to P-GW (temp use ITTI instead of ITTI/GTPv2-C/UDP)
@@ -170,7 +170,7 @@ int create_session_request_procedure::run(shared_ptr<sgw_eps_bearer_context> c)
   //s5s8_csr->gtp_ies = msg.gtp_ies;
   //s5s8_csr->l_endpoint = {};
   // TODO PGW address in HSS
-  s5s8_csr->r_endpoint = endpoint(pgw_cfg.s5s8_cp.addr4, sgwc_cfg.s5s8_cp.port);
+  s5s8_csr->r_endpoint = endpoint(pgw_cfg->s5s8_cp.addr4, sgwc_cfg->s5s8_cp.port);
 
   std::shared_ptr<itti_s5s8_create_session_request> msg = std::shared_ptr<itti_s5s8_create_session_request>(s5s8_csr);
   int ret = itti_inst->send_msg(msg);
@@ -330,7 +330,7 @@ int delete_session_request_procedure::run(shared_ptr<sgw_eps_bearer_context> c)
     s5s8_dsr->gtpc_tx_id = get_trxn_id();
     s5s8_dsr->teid = pdn_connection->pgw_fteid_s5_s8_cp.teid_gre_key;
     s5s8_dsr->l_teid = pdn_connection->sgw_fteid_s5_s8_cp.teid_gre_key;
-    s5s8_dsr->r_endpoint = endpoint(pgw_cfg.s5s8_cp.addr4, sgwc_cfg.s5s8_cp.port);
+    s5s8_dsr->r_endpoint = endpoint(pgw_cfg->s5s8_cp.addr4, sgwc_cfg->s5s8_cp.port);
 
     // transfer IEs from S11 msg to S5 msg
     // The SGW shall include this IE on S5/S8 if it receives the Cause from the MME/SGSN.
@@ -551,7 +551,7 @@ int modify_bearer_request_procedure::run(shared_ptr<sgw_eps_bearer_context> c)
         s5s8_mbr->gtpc_tx_id = px->gtpc_tx_id;
         s5s8_mbr->teid = px->pdn->pgw_fteid_s5_s8_cp.teid_gre_key;
         s5s8_mbr->l_teid = px->pdn->sgw_fteid_s5_s8_cp.teid_gre_key;
-        s5s8_mbr->r_endpoint = endpoint(pgw_cfg.s5s8_cp.addr4, sgwc_cfg.s5s8_cp.port);
+        s5s8_mbr->r_endpoint = endpoint(pgw_cfg->s5s8_cp.addr4, sgwc_cfg->s5s8_cp.port);
 
         mei_t mei;
         if (msg.gtp_ies.get(mei)) {
@@ -770,7 +770,7 @@ int release_access_bearers_request_procedure::run(shared_ptr<sgw_eps_bearer_cont
         itti_s5s8_release_access_bearers_request *s5s8 = new itti_s5s8_release_access_bearers_request(TASK_SGWC_APP, TASK_SGWC_S5S8);
         s5s8->gtpc_tx_id = breal->gtpc_tx_id;
         s5s8->teid = it_pdn->second->pgw_fteid_s5_s8_cp.teid_gre_key;
-        s5s8->r_endpoint = endpoint(it_pdn->second->pgw_fteid_s5_s8_cp.ipv4_address, pgw_cfg.s5s8_cp.port);
+        s5s8->r_endpoint = endpoint(it_pdn->second->pgw_fteid_s5_s8_cp.ipv4_address, pgw_cfg->s5s8_cp.port);
 
         std::shared_ptr<itti_s5s8_release_access_bearers_request> msg = std::shared_ptr<itti_s5s8_release_access_bearers_request>(s5s8);
         //breal->msg = msg;

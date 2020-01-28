@@ -48,7 +48,7 @@ spgwu_s1u   *spgwu_s1u_inst = nullptr;
 extern itti_mw     *itti_inst;
 extern pfcp_switch *pfcp_switch_inst;
 extern spgwu_app   *spgwu_app_inst;
-extern spgwu_config spgwu_cfg;
+extern spgwu_config *spgwu_cfg;
 
 
 void spgwu_app_task (void*);
@@ -124,9 +124,9 @@ void spgwu_app_task (void *args_p)
 spgwu_app::spgwu_app (const std::string& config_file)
 {
   Logger::spgwu_app().startup("Starting...");
-  spgwu_cfg.execute();
+  spgwu_cfg->execute();
 
-  if (itti_inst->create_task(TASK_SPGWU_APP, spgwu_app_task, &spgwu_cfg.itti.spgwu_app_sched_params) ) {
+  if (itti_inst->create_task(TASK_SPGWU_APP, spgwu_app_task, &spgwu_cfg->itti.spgwu_app_sched_params) ) {
     Logger::spgwu_app().error( "Cannot create task TASK_SPGWU_APP" );
     throw std::runtime_error( "Cannot create task TASK_SPGWU_APP" );
   }
@@ -181,7 +181,7 @@ void spgwu_app::handle_itti_msg (std::shared_ptr<itti_sxab_session_establishment
   pfcp_switch_inst->handle_pfcp_session_establishment_request(m, sx_resp);
 
   pfcp::node_id_t node_id = {};
-  spgwu_cfg.get_pfcp_node_id(node_id);
+  spgwu_cfg->get_pfcp_node_id(node_id);
   sx_resp->pfcp_ies.set(node_id);
 
   sx_resp->trxn_id = m->trxn_id;

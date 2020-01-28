@@ -55,8 +55,7 @@ using namespace pgwc;
 #include <sys/types.h>
 #include <unistd.h>
 
-extern pgw_app *pgw_app_inst;
-extern pgw_config pgw_cfg;
+extern pgw_config *pgw_cfg;
 
 //------------------------------------------------------------------------------
 int pgw_config::finalize ()
@@ -234,35 +233,35 @@ int pgw_config::load(const string& config_file)
 
   try
   {
-    const Setting& pgw_cfg = root[PGW_CONFIG_STRING_PGW_CONFIG];
+    const Setting& pgw_setting = root[PGW_CONFIG_STRING_PGW_CONFIG];
   } catch(const SettingNotFoundException &nfex) {
     Logger::pgwc_app().error("%s : %s", nfex.what(), nfex.getPath());
     return RETURNerror;
   }
 
-  const Setting &pgw_cfg = root[PGW_CONFIG_STRING_PGW_CONFIG];
+  const Setting &pgw_setting = root[PGW_CONFIG_STRING_PGW_CONFIG];
 
   try {
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_INSTANCE, instance);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_INSTANCE, instance);
   } catch(const SettingNotFoundException &nfex) {
     Logger::pgwc_app().info("%s : %s, using defaults", nfex.what(), nfex.getPath());
   }
 
   try {
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_PID_DIRECTORY, pid_dir);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_PID_DIRECTORY, pid_dir);
   } catch(const SettingNotFoundException &nfex) {
     Logger::pgwc_app().info("%s : %s, using defaults", nfex.what(), nfex.getPath());
   }
 
   try {
-    const Setting& itti_cfg = pgw_cfg[PGW_CONFIG_STRING_ITTI_TASKS];
+    const Setting& itti_cfg = pgw_setting[PGW_CONFIG_STRING_ITTI_TASKS];
     load_itti(itti_cfg, itti);
   } catch(const SettingNotFoundException &nfex) {
     Logger::pgwc_app().info("%s : %s, using defaults", nfex.what(), nfex.getPath());
   }
 
   try {
-    const Setting &nw_if_cfg = pgw_cfg[PGW_CONFIG_STRING_INTERFACES];
+    const Setting &nw_if_cfg = pgw_setting[PGW_CONFIG_STRING_INTERFACES];
 
     const Setting& s5s8_cp_cfg = nw_if_cfg[PGW_CONFIG_STRING_INTERFACE_S5_S8_CP];
     load_interface(s5s8_cp_cfg, s5s8_cp);
@@ -277,7 +276,7 @@ int pgw_config::load(const string& config_file)
   try {
     string astring;
 
-    const Setting &pool_cfg = pgw_cfg[PGW_CONFIG_STRING_IP_ADDRESS_POOL];
+    const Setting &pool_cfg = pgw_setting[PGW_CONFIG_STRING_IP_ADDRESS_POOL];
 
     const Setting &ipv4_pool_cfg = pool_cfg[PGW_CONFIG_STRING_IPV4_ADDRESS_LIST];
     int count = ipv4_pool_cfg.getLength();
@@ -345,7 +344,7 @@ int pgw_config::load(const string& config_file)
     }
 
 
-    const Setting &apn_list_cfg = pgw_cfg[PGW_CONFIG_STRING_APN_LIST];
+    const Setting &apn_list_cfg = pgw_setting[PGW_CONFIG_STRING_APN_LIST];
     count = apn_list_cfg.getLength();
     int apn_idx = 0;
     num_apn = 0;
@@ -396,21 +395,21 @@ int pgw_config::load(const string& config_file)
         Logger::pgwc_app().error("Bypass %d'th APN %s in config file\n", i+1, apn[apn_idx].apn.c_str());
       }
     }
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS, astring);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS, astring);
     IPV4_STR_ADDR_TO_INADDR (util::trim(astring).c_str(), default_dnsv4, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !");
 
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV4_ADDRESS, astring);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV4_ADDRESS, astring);
     IPV4_STR_ADDR_TO_INADDR (util::trim(astring).c_str(), default_dns_secv4, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !");
 
 
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_IPV6_ADDRESS, astring);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_IPV6_ADDRESS, astring);
     if (inet_pton (AF_INET6, util::trim(astring).c_str(), buf_in6_addr) == 1) {
       memcpy (&default_dnsv6, buf_in6_addr, sizeof (struct in6_addr));
     } else {
       Logger::pgwc_app().error("CONFIG : BAD ADDRESS in " PGW_CONFIG_STRING_DEFAULT_DNS_IPV6_ADDRESS " %s", astring.c_str());
       throw ("CONFIG : BAD ADDRESS in " PGW_CONFIG_STRING_DEFAULT_DNS_IPV6_ADDRESS " %s", astring.c_str());
     }
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV6_ADDRESS, astring);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV6_ADDRESS, astring);
     if (inet_pton (AF_INET6, util::trim(astring).c_str(), buf_in6_addr) == 1) {
       memcpy (&default_dns_secv6, buf_in6_addr, sizeof (struct in6_addr));
     } else {
@@ -418,15 +417,15 @@ int pgw_config::load(const string& config_file)
       throw ("CONFIG : BAD ADDRESS in " PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV6_ADDRESS " %s", astring.c_str());
     }
 
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO, astring);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO, astring);
     if (boost::iequals(astring, "yes")) {
       force_push_pco = true;
     } else {
       force_push_pco = false;
     }
-    pgw_cfg.lookupValue(PGW_CONFIG_STRING_UE_MTU, ue_mtu);
+    pgw_setting.lookupValue(PGW_CONFIG_STRING_UE_MTU, ue_mtu);
 
-    const Setting &pcef_cfg = pgw_cfg[PGW_CONFIG_STRING_PCEF];
+    const Setting &pcef_cfg = pgw_setting[PGW_CONFIG_STRING_PCEF];
     unsigned int apn_ambr = 0;
     if (!(pcef_cfg.lookupValue(PGW_CONFIG_STRING_APN_AMBR_UL, apn_ambr))) {
       Logger::pgwc_app().error(PGW_CONFIG_STRING_APN_AMBR_UL "failed");
@@ -448,7 +447,7 @@ int pgw_config::load(const string& config_file)
 }
 
 //------------------------------------------------------------------------------
-void pgw_config::display ()
+void pgw_config::display () const
 {
   Logger::pgwc_app().info( "==== EURECOM %s v%s ====", PACKAGE_NAME, PACKAGE_VERSION);
   Logger::pgwc_app().info( "Configuration PGW-C:");
@@ -542,12 +541,12 @@ void pgw_config::display ()
 }
 
 //------------------------------------------------------------------------------
-bool pgw_config::is_dotted_apn_handled(const string& apn, const pdn_type_t& pdn_type)
+bool pgw_config::is_dotted_apn_handled(const string& apn, const pdn_type_t& pdn_type) const
 {
-  for (int i = 0; i < pgw_cfg.num_apn; i++) {
-    if (0 == apn.compare(pgw_cfg.apn[i].apn_label)) {
+  for (int i = 0; (i < num_apn) && (i < sizeof(apn)); i++) {
+    if (0 == apn.compare(pgw_cfg->apn[i].apn_label)) {
       // TODO refine
-      if (pdn_type.pdn_type == pgw_cfg.apn[i].pdn_type.pdn_type) {
+      if (pdn_type.pdn_type == pgw_cfg->apn[i].pdn_type.pdn_type) {
         return true;
       }
     }
@@ -556,7 +555,7 @@ bool pgw_config::is_dotted_apn_handled(const string& apn, const pdn_type_t& pdn_
 }
 
 //------------------------------------------------------------------------------
-int pgw_config::get_pfcp_node_id(pfcp::node_id_t& node_id)
+int pgw_config::get_pfcp_node_id(pfcp::node_id_t& node_id) const
 {
   node_id = {};
   if (sx.addr4.s_addr) {
@@ -572,7 +571,7 @@ int pgw_config::get_pfcp_node_id(pfcp::node_id_t& node_id)
   return RETURNerror;
 }
 //------------------------------------------------------------------------------
-int pgw_config::get_pfcp_fseid(pfcp::fseid_t& fseid)
+int pgw_config::get_pfcp_fseid(pfcp::fseid_t& fseid) const
 {
   int rc = RETURNerror;
   fseid = {};

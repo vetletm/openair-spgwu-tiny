@@ -42,7 +42,7 @@ using namespace std;
 
 extern itti_mw *itti_inst;
 extern pgwc::pgw_app *pgw_app_inst;
-extern pgwc::pgw_config pgw_cfg;
+extern pgwc::pgw_config *pgw_cfg;
 
 //------------------------------------------------------------------------------
 int sx_session_restore_procedure::run()
@@ -105,14 +105,14 @@ int session_establishment_procedure::run(std::shared_ptr<itti_s5s8_create_sessio
   // IE node_id_t
   //-------------------
   pfcp::node_id_t node_id = {};
-  pgw_cfg.get_pfcp_node_id(node_id);
+  pgw_cfg->get_pfcp_node_id(node_id);
   sx_ser->pfcp_ies.set(node_id);
 
   //-------------------
   // IE fseid_t
   //-------------------
   pfcp::fseid_t cp_fseid = {};
-  pgw_cfg.get_pfcp_fseid(cp_fseid);
+  pgw_cfg->get_pfcp_fseid(cp_fseid);
   cp_fseid.seid = ppc->seid;
   sx_ser->pfcp_ies.set(cp_fseid);
 
@@ -309,7 +309,7 @@ int modify_bearer_procedure::run(std::shared_ptr<itti_s5s8_modify_bearer_request
   itti_sxab_session_modification_request *sx_smr = new itti_sxab_session_modification_request(TASK_PGWC_APP, TASK_PGWC_SX);
   sx_smr->seid = ppc->up_fseid.seid;
   sx_smr->trxn_id = this->trxn_id;
-  sx_smr->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg.sx.port);
+  sx_smr->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg->sx.port);
   sx_triggered = std::shared_ptr<itti_sxab_session_modification_request>(sx_smr);
 
 
@@ -318,7 +318,7 @@ int modify_bearer_procedure::run(std::shared_ptr<itti_s5s8_modify_bearer_request
   //-------------------
   // Unchanged so do not set it.
   //pfcp::fseid_t cp_fseid = {};
-  //pgw_cfg.get_pfcp_fseid(cp_fseid);
+  //pgw_cfg->get_pfcp_fseid(cp_fseid);
   //cp_fseid.seid = ppc->seid;
   //sx_smr->pfcp_ies.set(cp_fseid);
 
@@ -764,7 +764,7 @@ int release_access_bearers_procedure::run(std::shared_ptr<itti_s5s8_release_acce
   itti_sxab_session_modification_request *sx_smr = new itti_sxab_session_modification_request(TASK_PGWC_APP, TASK_PGWC_SX);
   sx_smr->seid = ppc->up_fseid.seid;
   sx_smr->trxn_id = this->trxn_id;
-  sx_smr->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg.sx.port);
+  sx_smr->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg->sx.port);
   sx_triggered = std::shared_ptr<itti_sxab_session_modification_request>(sx_smr);
 
 
@@ -773,7 +773,7 @@ int release_access_bearers_procedure::run(std::shared_ptr<itti_s5s8_release_acce
   //-------------------
   // Unchanged so do not set it.
   //pfcp::fseid_t cp_fseid = {};
-  //pgw_cfg.get_pfcp_fseid(cp_fseid);
+  //pgw_cfg->get_pfcp_fseid(cp_fseid);
   //cp_fseid.seid = ppc->seid;
   //sx_smr->pfcp_ies.set(cp_fseid);
 
@@ -885,7 +885,7 @@ int delete_session_procedure::run(std::shared_ptr<itti_s5s8_delete_session_reque
   itti_sxab_session_deletion_request *sx = new itti_sxab_session_deletion_request(TASK_PGWC_APP, TASK_PGWC_SX);
   sx->seid = ppc->up_fseid.seid;
   sx->trxn_id = this->trxn_id;
-  sx->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg.sx.port);
+  sx->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg->sx.port);
   sx_triggered = std::shared_ptr<itti_sxab_session_deletion_request>(sx);
 
 
@@ -953,7 +953,7 @@ int downlink_data_report_procedure::run(std::shared_ptr<pgwc::pgw_context> conte
   itti_s5s8_downlink_data_notification *s5 = new itti_s5s8_downlink_data_notification(TASK_PGWC_APP, TASK_PGWC_S5S8);
   s5->teid = ppc->sgw_fteid_s5_s8_cp.teid_gre_key;
   s5->gtpc_tx_id = this->trxn_id;
-  s5->r_endpoint = endpoint(ppc->sgw_fteid_s5_s8_cp.ipv4_address, pgw_cfg.s5s8_cp.port);
+  s5->r_endpoint = endpoint(ppc->sgw_fteid_s5_s8_cp.ipv4_address, pgw_cfg->s5s8_cp.port);
   s5->gtp_ies.set(e);
   s5_triggered = std::shared_ptr<itti_s5s8_downlink_data_notification>(s5);
 
@@ -991,7 +991,7 @@ void downlink_data_report_procedure::handle_itti_msg (itti_s5s8_downlink_data_no
   itti_sxab_session_report_response *sx = new itti_sxab_session_report_response(TASK_PGWC_APP, TASK_PGWC_SX);
   sx->seid = ppc->up_fseid.seid;
   sx->trxn_id = this->trxn_id;
-  sx->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg.sx.port);
+  sx->r_endpoint = endpoint(ppc->up_fseid.ipv4_address, pgw_cfg->sx.port);
   std::shared_ptr<itti_sxab_session_report_response> sx_triggered = std::shared_ptr<itti_sxab_session_report_response>(sx);
   sx->pfcp_ies.set(pfcp_cause);
   int ret = itti_inst->send_msg(sx_triggered);

@@ -53,7 +53,7 @@ using namespace spgwu;
 using namespace std;
 
 extern itti_mw *itti_inst;
-extern spgwu_config spgwu_cfg;
+extern spgwu_config *spgwu_cfg;
 extern spgwu_s1u  *spgwu_s1u_inst;
 
 static std::string string_to_hex(const char* input, const size_t len)
@@ -256,11 +256,11 @@ int pfcp_switch::create_pdn_socket (const char * const ifname)
 //------------------------------------------------------------------------------
 void pfcp_switch::setup_pdn_interfaces()
 {
-  std::string pdn_interface_name = fmt::format(PDN_INTERFACE_NAME"{0}",spgwu_cfg.instance);
+  std::string pdn_interface_name = fmt::format(PDN_INTERFACE_NAME"{0}",spgwu_cfg->instance);
   std::string cmd = fmt::format("ip link set dev {0} down > /dev/null 2>&1; ip link del {0} > /dev/null 2>&1; sync; sleep 1; ip link add {0} type dummy; ip link set dev {0} up", pdn_interface_name);
   int rc = system ((const char*)cmd.c_str());
 
-  for (auto it : spgwu_cfg.pdns) {
+  for (auto it : spgwu_cfg->pdns) {
     if (it.prefix_ipv4) {
       struct in_addr address4 = {};
       address4.s_addr = it.network_ipv4.s_addr + be32toh(1);
@@ -272,7 +272,7 @@ void pfcp_switch::setup_pdn_interfaces()
         cmd = fmt::format("iptables -t nat -A POSTROUTING -s {}/{} -j SNAT --to-source {}",
                           conv::toString(address4).c_str(),
                           it.prefix_ipv4,
-                          conv::toString(spgwu_cfg.sgi.addr4).c_str());
+                          conv::toString(spgwu_cfg->sgi.addr4).c_str());
         rc = system ((const char*)cmd.c_str());
       }
     }
@@ -310,7 +310,7 @@ void pfcp_switch::setup_pdn_interfaces()
     exit(EXIT_FAILURE);
   }
 
-  if ((sock_w = create_pdn_socket(spgwu_cfg.sgi.if_name.c_str())) <= 0) {
+  if ((sock_w = create_pdn_socket(spgwu_cfg->sgi.if_name.c_str())) <= 0) {
     Logger::pfcp_switch().error("Could not set PDN dummy write socket");
     sleep(2);
     exit(EXIT_FAILURE);
@@ -322,12 +322,12 @@ pfcp::fteid_t pfcp_switch::generate_fteid_s1u()
 {
   pfcp::fteid_t fteid = {};
   fteid.teid = generate_teid_s1u();
-  if (spgwu_cfg.s1_up.addr4.s_addr) {
+  if (spgwu_cfg->s1_up.addr4.s_addr) {
     fteid.v4 = 1;
-    fteid.ipv4_address.s_addr = spgwu_cfg.s1_up.addr4.s_addr;
+    fteid.ipv4_address.s_addr = spgwu_cfg->s1_up.addr4.s_addr;
   } else {
     fteid.v6 = 1;
-    fteid.ipv6_address = spgwu_cfg.s1_up.addr6;
+    fteid.ipv6_address = spgwu_cfg->s1_up.addr6;
   }
   return fteid;
 }
@@ -346,7 +346,7 @@ pfcp_switch::pfcp_switch() : seid_generator_(), teid_s1u_generator_(),
   sock_w = -1;
   pdn_if_index = -1;
   setup_pdn_interfaces();
-  thread_sock_ = thread(&pfcp_switch::pdn_read_loop,this, spgwu_cfg.itti.sx_sched_params);
+  thread_sock_ = thread(&pfcp_switch::pdn_read_loop,this, spgwu_cfg->itti.sx_sched_params);
   thread_sock_.detach();
 }
 //------------------------------------------------------------------------------
@@ -571,7 +571,7 @@ void pfcp_switch::handle_pfcp_session_establishment_request(std::shared_ptr<itti
         //start_timer_max_commit_interval();
 
         pfcp::fseid_t up_fseid = {};
-        spgwu_cfg.get_pfcp_fseid(up_fseid);
+        spgwu_cfg->get_pfcp_fseid(up_fseid);
         up_fseid.seid = session->get_up_seid();
         resp->pfcp_ies.set(up_fseid);
 

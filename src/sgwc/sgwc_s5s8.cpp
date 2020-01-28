@@ -39,7 +39,7 @@ using namespace sgwc;
 using namespace std;
 
 extern itti_mw *itti_inst;
-extern sgwc_config sgwc_cfg;
+extern sgwc_config *sgwc_cfg;
 extern sgw_s5s8  *sgw_s5s8_inst;
 
 void sgw_s5s8_task (void*);
@@ -109,7 +109,7 @@ void sgw_s5s8_task (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-sgw_s5s8::sgw_s5s8 () : gtpv2c_stack(string(inet_ntoa(sgwc_cfg.s5s8_cp.addr4)), sgwc_cfg.s5s8_cp.port, sgwc_cfg.s5s8_cp.thread_rd_sched_params)
+sgw_s5s8::sgw_s5s8 () : gtpv2c_stack(string(inet_ntoa(sgwc_cfg->s5s8_cp.addr4)), sgwc_cfg->s5s8_cp.port, sgwc_cfg->s5s8_cp.thread_rd_sched_params)
 {
   Logger::sgwc_s5s8().startup("Starting...");
   if (itti_inst->create_task(TASK_SGWC_S5S8, sgw_s5s8_task, nullptr) ) {

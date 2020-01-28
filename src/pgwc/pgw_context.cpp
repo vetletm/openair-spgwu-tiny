@@ -40,7 +40,7 @@ using namespace pgwc;
 
 extern itti_mw *itti_inst;
 extern pgwc::pgw_app *pgw_app_inst;
-extern pgwc::pgw_config pgw_cfg;
+extern pgwc::pgw_config *pgw_cfg;
 
 //------------------------------------------------------------------------------
 void pgw_eps_bearer::release_access_bearer()
@@ -176,7 +176,7 @@ void pgw_pdn_connection::deallocate_ressources(const std::string& apn)
 void pgw_pdn_connection::generate_seid()
 {
   // DO it simple now:
-  seid = pgw_fteid_s5_s8_cp.teid_gre_key | (((uint64_t)pgw_cfg.instance) << 32);
+  seid = pgw_fteid_s5_s8_cp.teid_gre_key | (((uint64_t)pgw_cfg->instance) << 32);
 }
 //------------------------------------------------------------------------------
 // TODO check if prd_id should be uniq in the (S)PGW-U or in the context of a pdn connection
@@ -474,7 +474,7 @@ void pgw_context::handle_itti_msg (std::shared_ptr<itti_s5s8_create_session_requ
     }
     p->default_bearer = csreq->gtp_ies.bearer_contexts_to_be_created.at(0).eps_bearer_id;
     p->sgw_fteid_s5_s8_cp = csreq->gtp_ies.sender_fteid_for_cp;
-    p->pgw_fteid_s5_s8_cp = pgw_app_inst->generate_s5s8_cp_fteid(pgw_cfg.s5s8_cp.addr4);
+    p->pgw_fteid_s5_s8_cp = pgw_app_inst->generate_s5s8_cp_fteid(pgw_cfg->s5s8_cp.addr4);
     pgw_app_inst->set_s5s8cpgw_fteid_2_pgw_context(p->pgw_fteid_s5_s8_cp, shared_from_this());
     sp = std::shared_ptr<pgw_pdn_connection>(p);
     sa->insert_pdn_connection(sp);
@@ -486,7 +486,7 @@ void pgw_context::handle_itti_msg (std::shared_ptr<itti_s5s8_create_session_requ
 //    pgw_eps_bearer& eps_bearer = sp->get_eps_bearer(it.eps_bearer_id);
 //    eps_bearer.ebi = it.eps_bearer_id;
 //    eps_bearer.tft = it.tft;
-//    //eps_bearer.pgw_fteid_s5_s8_up = pgw_app_inst->generate_s5s8_up_fteid(pgw_cfg.s5s8_up.addr4);
+//    //eps_bearer.pgw_fteid_s5_s8_up = pgw_app_inst->generate_s5s8_up_fteid(pgw_cfg->s5s8_up.addr4);
 //    // Not now (no split SGW-PGW)
 //    //eps_bearer.sgw_fteid_s5_s8_up = it.s5_s8_u_sgw_fteid;
 //    eps_bearer.eps_bearer_qos = it.bearer_level_qos;

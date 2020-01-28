@@ -54,7 +54,7 @@ sgw_s5s8  *sgw_s5s8_inst = nullptr;
 
 extern itti_mw *itti_inst;
 extern sgwc_app *sgwc_app_inst;
-extern sgwc_config sgwc_cfg;
+extern sgwc_config *sgwc_cfg;
 
 
 void sgwc_app_task (void*);
@@ -287,7 +287,7 @@ void sgwc_app_task (void *args_p)
 sgwc_app::sgwc_app (const std::string& config_file) : s11lteid2sgw_eps_bearer_context()
 {
   Logger::sgwc_app().startup("Starting...");
-  sgwc_cfg.execute();
+  sgwc_cfg->execute();
 
   teid_s11_cp = 0;
   teid_s5s8_cp = 0;

@@ -42,8 +42,8 @@ itti_mw *itti_inst = nullptr;
 async_shell_cmd *async_shell_cmd_inst = nullptr;
 pgw_app *pgw_app_inst = nullptr;
 sgwc_app *sgwc_app_inst = nullptr;
-pgw_config pgw_cfg;
-sgwc_config sgwc_cfg;
+pgw_config *pgw_cfg = nullptr;
+sgwc_config *sgwc_cfg = nullptr;
 
 void send_heartbeat_to_tasks(const uint32_t sequence);
 
@@ -62,19 +62,10 @@ void send_heartbeat_to_tasks(const uint32_t sequence)
 void my_app_signal_handler(int s)
 {
   std::cout << "Caught signal " << s << std::endl;
-  Logger::system().startup( "exiting" );
+  Logger::system().startup( "exiting..." );
   itti_inst->send_terminate_msg(TASK_SGWC_APP);
   itti_inst->wait_tasks_end();
-  std::cout << "Freeing Allocated memory..." << std::endl;
-  if (async_shell_cmd_inst) delete async_shell_cmd_inst; async_shell_cmd_inst = nullptr;
-  std::cout << "Async Shell CMD memory done." << std::endl;
-  if (itti_inst) delete itti_inst; itti_inst = nullptr;
-  std::cout << "ITTI memory done." << std::endl;
-  if (sgwc_app_inst) delete sgwc_app_inst; sgwc_app_inst = nullptr;
-  std::cout << "SGW APP memory done." << std::endl;
-  if (pgw_app_inst) delete pgw_app_inst; pgw_app_inst = nullptr;
-  std::cout << "PGW APP memory done." << std::endl;
-  std::cout << "Freeing Allocated memory done" << std::endl;
+  Logger::system().startup( "exiting now" );
   exit(0);
 }
 //------------------------------------------------------------------------------
@@ -101,31 +92,40 @@ int main(int argc, char **argv)
   sigaction(SIGINT, &sigIntHandler, NULL);
 
   // Config
-  sgwc_cfg.load(Options::getlibconfigConfig());
-  sgwc_cfg.display();
-  pgw_cfg.load(Options::getlibconfigConfig());
-  pgw_cfg.display();
+  sgwc_config asgwc_config{};
+  sgwc_cfg = &asgwc_config;
+  pgw_config apgwc_config{};
+  pgw_cfg = &apgwc_config;
+
+  sgwc_cfg->load(Options::getlibconfigConfig());
+  sgwc_cfg->display();
+  pgw_cfg->load(Options::getlibconfigConfig());
+  pgw_cfg->display();
 
   // Inter task Interface
-  itti_inst = new itti_mw();
-  itti_inst->start(pgw_cfg.itti.itti_timer_sched_params);
+  itti_mw  aitti_mw{};
+  itti_inst = &aitti_mw;
+  itti_inst->start(pgw_cfg->itti.itti_timer_sched_params);
 
   // system command
-  async_shell_cmd_inst = new async_shell_cmd(sgwc_cfg.itti.async_cmd_sched_params);
+  async_shell_cmd aasync_shell_cmd{sgwc_cfg->itti.async_cmd_sched_params};
+  async_shell_cmd_inst = &aasync_shell_cmd;
 
   // PGW application layer
-  pgw_app_inst = new pgw_app(Options::getlibconfigConfig());
+  pgw_app apgw_app{Options::getlibconfigConfig()};
+  pgw_app_inst = &apgw_app;
 
   // PID file
   // Currently hard-coded value. TODO: add as config option.
-   string pid_file_name = get_exe_absolute_path("/var/run", pgw_cfg.instance);
+   string pid_file_name = get_exe_absolute_path("/var/run", pgw_cfg->instance);
   if (! is_pid_file_lock_success(pid_file_name.c_str())) {
     Logger::pgwc_app().error( "Lock PID file %s failed\n", pid_file_name.c_str());
     exit (-EDEADLK);
   }
 
   // SGW application layer
-  sgwc_app_inst = new sgwc_app(Options::getlibconfigConfig());
+  sgwc_app asgwc_app{Options::getlibconfigConfig()};
+  sgwc_app_inst = &asgwc_app;
 
 
   FILE *fp = NULL;

@@ -35,7 +35,7 @@ using namespace spgwu;
 
 extern pfcp_switch *pfcp_switch_inst;
 extern spgwu_s1u  *spgwu_s1u_inst;
-extern spgwu_config spgwu_cfg;
+extern spgwu_config *spgwu_cfg;
 
 //------------------------------------------------------------------------------
 void pfcp_far::apply_forwarding_rules(struct iphdr* const iph, const std::size_t num_bytes, bool& nocp, bool& buff)
@@ -53,14 +53,14 @@ void pfcp_far::apply_forwarding_rules(struct iphdr* const iph, const std::size_t
             switch (forwarding_parameters.second.outer_header_creation.second.outer_header_creation_description) {
             case OUTER_HEADER_CREATION_GTPU_UDP_IPV4:
               spgwu_s1u_inst->send_g_pdu(forwarding_parameters.second.outer_header_creation.second.ipv4_address,
-                  spgwu_cfg.s1_up.port,
+                  spgwu_cfg->s1_up.port,
                   forwarding_parameters.second.outer_header_creation.second.teid,
                   reinterpret_cast<const char*>(iph), num_bytes);
 
               break;
             case OUTER_HEADER_CREATION_GTPU_UDP_IPV6:
               spgwu_s1u_inst->send_g_pdu(forwarding_parameters.second.outer_header_creation.second.ipv6_address,
-                  spgwu_cfg.s1_up.port,
+                  spgwu_cfg->s1_up.port,
                   forwarding_parameters.second.outer_header_creation.second.teid,
                   reinterpret_cast<const char*>(iph), num_bytes);
               break;

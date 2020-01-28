@@ -42,7 +42,7 @@ using namespace spgwu;
 using namespace std;
 
 extern itti_mw *itti_inst;
-extern spgwu_config spgwu_cfg;
+extern spgwu_config *spgwu_cfg;
 extern spgwu_sx  *spgwu_sx_inst;
 
 void spgwu_sx_task (void*);
@@ -184,7 +184,7 @@ void spgwu_sx_task (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-spgwu_sx::spgwu_sx () : pfcp_l4_stack(std::string(inet_ntoa(spgwu_cfg.sx.addr4)), spgwu_cfg.sx.port, spgwu_cfg.sx.thread_rd_sched_params)
+spgwu_sx::spgwu_sx () : pfcp_l4_stack(std::string(inet_ntoa(spgwu_cfg->sx.addr4)), spgwu_cfg->sx.port, spgwu_cfg->sx.thread_rd_sched_params)
 {
   Logger::spgwu_sx().startup("Starting...");
 
@@ -216,12 +216,12 @@ spgwu_sx::spgwu_sx () : pfcp_l4_stack(std::string(inet_ntoa(spgwu_cfg.sx.addr4))
   up_function_features.trace = 0;
   up_function_features.frrt = 0;
 
-  if (itti_inst->create_task(TASK_SPGWU_SX, spgwu_sx_task, &spgwu_cfg.itti.sx_sched_params) ) {
+  if (itti_inst->create_task(TASK_SPGWU_SX, spgwu_sx_task, &spgwu_cfg->itti.sx_sched_params) ) {
     Logger::spgwu_sx().error( "Cannot create task TASK_SPGWU_SX" );
     throw std::runtime_error( "Cannot create task TASK_SPGWU_SX" );
   }
 
-  for (std::vector<pfcp::node_id_t>::const_iterator it = spgwu_cfg.spgwcs.begin(); it != spgwu_cfg.spgwcs.end(); ++it) {
+  for (std::vector<pfcp::node_id_t>::const_iterator it = spgwu_cfg->spgwcs.begin(); it != spgwu_cfg->spgwcs.end(); ++it) {
     start_association(*it);
   }
   Logger::spgwu_sx().startup( "Started" );
@@ -494,13 +494,13 @@ void spgwu_sx::start_association(const pfcp::node_id_t& node_id)
   a.trxn_id = generate_trxn_id();
 
   pfcp::node_id_t this_node_id = {};
-  if (spgwu_cfg.get_pfcp_node_id(this_node_id) == RETURNok) {
+  if (spgwu_cfg->get_pfcp_node_id(this_node_id) == RETURNok) {
     a.pfcp_ies.set(this_node_id);
     pfcp::recovery_time_stamp_t r = {.recovery_time_stamp = (uint32_t)recovery_time_stamp};
     a.pfcp_ies.set(r);
     a.pfcp_ies.set(up_function_features);
     if (node_id.node_id_type == pfcp::NODE_ID_TYPE_IPV4_ADDRESS) {
-      //a.l_endpoint = endpoint(boost::asio::ip::address_v4(spgwu_cfg.sx.addr4), 0);
+      //a.l_endpoint = endpoint(boost::asio::ip::address_v4(spgwu_cfg->sx.addr4), 0);
       a.r_endpoint = endpoint(node_id.u1.ipv4_address, pfcp::default_port);
       send_sx_msg(a);
     } else {
@@ -520,7 +520,7 @@ void spgwu_sx::send_sx_msg(const pfcp::fseid_t& cp_fseid, const pfcp::pfcp_sessi
   if (pfcp_associations::get_instance().get_association(cp_fseid, sa)) {
    const pfcp::node_id_t& peer_node_id = sa->peer_node_id();
     if (peer_node_id.node_id_type == pfcp::NODE_ID_TYPE_IPV4_ADDRESS) {
-      //a.l_endpoint = endpoint(boost::asio::ip::address_v4(spgwu_cfg.sx.addr4), 0);
+      //a.l_endpoint = endpoint(boost::asio::ip::address_v4(spgwu_cfg->sx.addr4), 0);
       isrr.r_endpoint = endpoint(peer_node_id.u1.ipv4_address, pfcp::default_port);
       send_sx_msg(isrr);
     } else {

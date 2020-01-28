@@ -41,7 +41,7 @@ using namespace pgwc;
 using namespace std;
 
 extern itti_mw *itti_inst;
-extern pgw_config pgw_cfg;
+extern pgw_config *pgw_cfg;
 extern pgwc_sxab  *pgwc_sxab_inst;
 
 void pgwc_sxab_task (void*);
@@ -180,7 +180,7 @@ void pgwc_sxab_task (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-pgwc_sxab::pgwc_sxab() : pfcp_l4_stack(string(inet_ntoa(pgw_cfg.sx.addr4)), pgw_cfg.sx.port, pgw_cfg.sx.thread_rd_sched_params)
+pgwc_sxab::pgwc_sxab() : pfcp_l4_stack(string(inet_ntoa(pgw_cfg->sx.addr4)), pgw_cfg->sx.port, pgw_cfg->sx.thread_rd_sched_params)
 {
   Logger::pgwc_sx().startup("Starting...");
   // TODO  refine this, look at RFC5905
@@ -327,13 +327,13 @@ void pgwc_sxab::handle_receive_association_setup_request(pfcp::pfcp_msg& msg, co
     pfcp::cause_t cause = {.cause_value = pfcp::CAUSE_VALUE_REQUEST_ACCEPTED};
     a.pfcp_ies.set(cause);
     pfcp::node_id_t node_id = {};
-    if (pgw_cfg.get_pfcp_node_id(node_id) == RETURNok) {
+    if (pgw_cfg->get_pfcp_node_id(node_id) == RETURNok) {
       a.pfcp_ies.set(node_id);
       pfcp::recovery_time_stamp_t r = {.recovery_time_stamp = (uint32_t)recovery_time_stamp};
       a.pfcp_ies.set(r);
       a.pfcp_ies.set(cp_function_features);
       if (node_id.node_id_type == pfcp::NODE_ID_TYPE_IPV4_ADDRESS) {
-        //a.l_endpoint = boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4(pgw_cfg.sx.addr4), 0);
+        //a.l_endpoint = boost::asio::ip::udp::endpoint(boost::asio::ip::address_v4(pgw_cfg->sx.addr4), 0);
         a.r_endpoint = remote_endpoint;
         send_sx_msg(a);
       } else {

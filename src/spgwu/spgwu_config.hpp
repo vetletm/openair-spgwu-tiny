@@ -112,7 +112,7 @@ private:
 public:
 
   /* Reader/writer lock for this configuration */
-  std::mutex      m_rw_lock;
+  mutable std::mutex      m_rw_lock;
   std::string     pid_dir;
   unsigned int    instance;
   interface_cfg_t s1_up;
@@ -144,13 +144,13 @@ public:
     sx.thread_rd_sched_params.sched_priority = 95;
     sx.port = pfcp::default_port;  
   };
-  void lock() {m_rw_lock.lock();};
-  void unlock() {m_rw_lock.unlock();};
+  void lock() const {m_rw_lock.lock();};
+  void unlock() const {m_rw_lock.unlock();};
   int load(const std::string& config_file);
   int execute();
-  void display();
-  int  get_pfcp_node_id(pfcp::node_id_t& node_id);
-  int get_pfcp_fseid(pfcp::fseid_t& fseid);
+  void display() const;
+  int  get_pfcp_node_id(pfcp::node_id_t& node_id) const;
+  int get_pfcp_fseid(pfcp::fseid_t& fseid) const;
 
 };
 } // namespace spgwu

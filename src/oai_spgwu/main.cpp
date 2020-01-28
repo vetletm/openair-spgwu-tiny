@@ -41,29 +41,21 @@ itti_mw *itti_inst = nullptr;
 async_shell_cmd *async_shell_cmd_inst = nullptr;
 pfcp_switch *pfcp_switch_inst = nullptr;
 spgwu_app *spgwu_app_inst = nullptr;
-spgwu_config spgwu_cfg;
+spgwu_config *spgwu_cfg = nullptr;
 boost::asio::io_service io_service;
 
 //------------------------------------------------------------------------------
 void my_app_signal_handler(int s){
   std::cout << "Caught signal " << s << std::endl;
-  Logger::system().startup( "exiting" );
+  Logger::system().startup( "exiting..." );
   itti_inst->send_terminate_msg(TASK_SPGWU_APP);
   itti_inst->wait_tasks_end();
-  std::cout << "Freeing Allocated memory..." << std::endl;
-  if (async_shell_cmd_inst) delete async_shell_cmd_inst; async_shell_cmd_inst = nullptr;
-  std::cout << "Async Shell CMD memory done." << std::endl;
-  if (itti_inst) delete itti_inst; itti_inst = nullptr;
-  std::cout << "ITTI memory done." << std::endl;
-  if (spgwu_app_inst) delete spgwu_app_inst; spgwu_app_inst = nullptr;
-  std::cout << "SPGW-U APP memory done." << std::endl;
-  std::cout << "Freeing Allocated memory done" << std::endl;
+  Logger::system().startup( "exiting now" );
   exit(0);
 }
 //------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-
   // Command line options
   if ( !Options::parse( argc, argv ) )
   {
@@ -83,22 +75,27 @@ int main(int argc, char **argv)
   sigaction(SIGINT, &sigIntHandler, NULL);
 
   // Config
-  spgwu_cfg.load(Options::getlibconfigConfig());
-  spgwu_cfg.display();
+  spgwu_config aspgwu_config{};
+  spgwu_cfg = &aspgwu_config;
+  spgwu_cfg->load(Options::getlibconfigConfig());
+  spgwu_cfg->display();
 
   // Inter task Interface
-  itti_inst = new itti_mw();
-  itti_inst->start(spgwu_cfg.itti.itti_timer_sched_params);
+  itti_mw aitti_mw{};
+  itti_inst = &aitti_mw;
+  itti_inst->start(spgwu_cfg->itti.itti_timer_sched_params);
 
   // system command
-  async_shell_cmd_inst = new async_shell_cmd(spgwu_cfg.itti.async_cmd_sched_params);
+  async_shell_cmd aasync_shell_cmd{spgwu_cfg->itti.async_cmd_sched_params};
+  async_shell_cmd_inst = &aasync_shell_cmd;
 
   // PGW application layer
-  spgwu_app_inst = new spgwu_app(Options::getlibconfigConfig());
+  spgwu_app aspgwu_app{Options::getlibconfigConfig()};
+  spgwu_app_inst = &aspgwu_app;
 
   // PID file
   // Currently hard-coded value. TODO: add as config option.
-   string pid_file_name = get_exe_absolute_path("/var/run", spgwu_cfg.instance);
+   string pid_file_name = get_exe_absolute_path("/var/run", spgwu_cfg->instance);
   if (! is_pid_file_lock_success(pid_file_name.c_str())) {
     Logger::spgwu_app().error( "Lock PID file %s failed\n", pid_file_name.c_str());
     exit (-EDEADLK);
