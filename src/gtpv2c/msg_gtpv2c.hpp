@@ -1613,8 +1613,8 @@ public:
 
   bool get(recovery_t& v) const {if (recovery_restart_counter.first) {v = recovery_restart_counter.second;return true;}return false;}
   bool get(node_features_t& v) const {if (sending_node_features.first) {v = sending_node_features.second;return true;}return false;}
-  void set(const recovery_t& v) {recovery_restart_counter.first = true; recovery_restart_counter.second = v;}
-  void set(const node_features_t& v) {sending_node_features.first = true; sending_node_features.second = v;}
+  void set(const recovery_t& v, const uint8_t instance = 0) {recovery_restart_counter.first = true; recovery_restart_counter.second = v;}
+  void set(const node_features_t& v, const uint8_t instance = 0) {sending_node_features.first = true; sending_node_features.second = v;}
 };
 
 //------------------------------------------------------------------------------
@@ -1643,8 +1643,8 @@ public:
 
   bool get(recovery_t& v) const {if (recovery_restart_counter.first) {v = recovery_restart_counter.second;return true;}return false;}
   bool get(node_features_t& v) const {if (sending_node_features.first) {v = sending_node_features.second;return true;}return false;}
-  void set(const recovery_t& v) {recovery_restart_counter.first = true; recovery_restart_counter.second = v;}
-  void set(const node_features_t& v) {sending_node_features.first = true; sending_node_features.second = v;}
+  void set(const recovery_t& v, const uint8_t instance = 0) {recovery_restart_counter.first = true; recovery_restart_counter.second = v;}
+  void set(const node_features_t& v, const uint8_t instance = 0) {sending_node_features.first = true; sending_node_features.second = v;}
 };
 
 
