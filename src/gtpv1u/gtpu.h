@@ -31,6 +31,7 @@
 #include <endian.h>
 #include <stdint.h>
 
+
 struct gtpuhdr
   {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -68,5 +69,17 @@ struct gtpuhdr
 
 
     /*The options start here. */
+  uint16_t sequence;
+  uint8_t pdu_number;
+  uint8_t next_ext_type;
   };
 #endif
+
+struct gtpu_ext_hdr{
+struct gtpuhdr* gtpuhdr;
+uint8_t message_length;
+uint8_t  pdu_type;
+uint8_t qfi;
+uint8_t next_ext_type;
+};
+

@@ -158,14 +158,25 @@ void gtpu_l4_stack::handle_receive_message_cb(
     uint64_t& gtpc_tx_id) {}
 
 //------------------------------------------------------------------------------
+
 void gtpu_l4_stack::send_g_pdu(
     const struct sockaddr_in& peer_addr, const teid_t teid, const char* payload,
     const ssize_t payload_len) {
   struct gtpuhdr* gtpuhdr = reinterpret_cast<struct gtpuhdr*>(
       reinterpret_cast<uintptr_t>(payload) -
       (uintptr_t) sizeof(struct gtpuhdr));
+  // gtpuhdr->spare          = 0;
+  // gtpuhdr->e              = 0;
+  // gtpuhdr->s              = 0;
+  // gtpuhdr->pn             = 0;
+  // gtpuhdr->pt             = 1;
+  // gtpuhdr->version        = 1;
+  // gtpuhdr->message_type   = GTPU_G_PDU;
+  // gtpuhdr->message_length = htobe16(payload_len);
+  // gtpuhdr->teid           = htobe32(teid);
+
   gtpuhdr->spare          = 0;
-  gtpuhdr->e              = 0;
+  gtpuhdr->e              = 1;
   gtpuhdr->s              = 0;
   gtpuhdr->pn             = 0;
   gtpuhdr->pt             = 1;
@@ -173,9 +184,23 @@ void gtpu_l4_stack::send_g_pdu(
   gtpuhdr->message_type   = GTPU_G_PDU;
   gtpuhdr->message_length = htobe16(payload_len);
   gtpuhdr->teid           = htobe32(teid);
+  gtpuhdr->pdu_number     = 0x00;
+  gtpuhdr->sequence       = 0x00;
+	gtpuhdr->next_ext_type  = 0x85;
+
+
+  struct gtpu_ext_hdr*  gtpu_ext_hdr = reinterpret_cast<struct gtpu_ext_hdr*>(
+      reinterpret_cast<uintptr_t>(payload) -
+      (uintptr_t) sizeof(struct gtpu_ext_hdr));
+  gtpu_ext_hdr->gtpuhdr        = gtpuhdr;
+  gtpu_ext_hdr->message_length = 0x01;
+  gtpu_ext_hdr->pdu_type       = 0x00;
+  gtpu_ext_hdr->qfi            = 0x05;
+  gtpu_ext_hdr->next_ext_type  = 0x00;
+
   udp_s.async_send_to(
-      reinterpret_cast<const char*>(gtpuhdr),
-      payload_len + sizeof(struct gtpuhdr), peer_addr);
+      reinterpret_cast<const char*>(gtpu_ext_hdr),
+      payload_len + sizeof(struct gtpu_ext_hdr), peer_addr);
 }
 //------------------------------------------------------------------------------
 void gtpu_l4_stack::send_g_pdu(
