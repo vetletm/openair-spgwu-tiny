@@ -65,6 +65,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get upgrade --yes && DE
     psmisc \
     net-tools \
     iproute2 \
+    iputils-ping \
     ethtool \
     iptables \
     tshark \
